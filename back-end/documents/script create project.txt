@@ -1,0 +1,55 @@
+$services = @(
+    "IdentityService",
+    "BookingService",
+    "PaymentService",
+    "NotificationService"
+)
+
+foreach ($service in $services) {
+    $root = "src/Services/$service"
+
+    dotnet new webapi `
+        -n "$service.Api" `
+        -o "$root/$service.Api" `
+        --use-controllers
+
+    dotnet new classlib `
+        -n "$service.Application" `
+        -o "$root/$service.Application"
+
+    dotnet new classlib `
+        -n "$service.Domain" `
+        -o "$root/$service.Domain"
+
+    dotnet new classlib `
+        -n "$service.Infrastructure" `
+        -o "$root/$service.Infrastructure"
+
+    dotnet new classlib `
+        -n "$service.Contracts" `
+        -o "$root/$service.Contracts"
+
+    dotnet sln add "$root/$service.Api"
+    dotnet sln add "$root/$service.Application"
+    dotnet sln add "$root/$service.Domain"
+    dotnet sln add "$root/$service.Infrastructure"
+    dotnet sln add "$root/$service.Contracts"
+
+    dotnet add "$root/$service.Application" `
+        reference "$root/$service.Domain"
+
+    dotnet add "$root/$service.Application" `
+        reference "$root/$service.Contracts"
+
+    dotnet add "$root/$service.Infrastructure" `
+        reference "$root/$service.Application"
+
+    dotnet add "$root/$service.Infrastructure" `
+        reference "$root/$service.Domain"
+
+    dotnet add "$root/$service.Api" `
+        reference "$root/$service.Application"
+
+    dotnet add "$root/$service.Api" `
+        reference "$root/$service.Infrastructure"
+}
