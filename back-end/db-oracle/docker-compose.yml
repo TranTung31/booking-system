@@ -1,0 +1,20 @@
+# @format
+
+services:
+  oracle-db:
+    image: gvenzl/oracle-free:23-slim
+    container_name: oracle-db
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: Ab@123456
+      ORACLE_DATABASE: FREE
+      APP_USER: devuser
+      APP_USER_PASSWORD: Ab@123456`
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    restart: unless-stopped
+
+volumes:
+  oracle-data:
+    driver: local
