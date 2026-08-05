@@ -14,9 +14,65 @@ namespace IdentityService.Infrastructure.Repositories
             _userManager = userManager;
         }
 
+        public async Task<Guid> CreateUserAsync(string userName, string email, string? fullName, string password)
+        {
+            if (await _userManager.FindByNameAsync(userName) != null)
+            {
+                throw new InvalidOperationException($"User with username '{userName}' already exists.");
+            }
+
+            var appUser = new ApplicationUser
+            {
+                UserName = userName,
+                Email = email,
+                FullName = fullName,
+                EmailConfirmed = true,
+            };
+
+            var result = await _userManager.CreateAsync(appUser, password);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to create user: {errors}");
+            }
+
+            return appUser.Id;
+        }
+
+        public async Task<Guid> UpdateUserAsync(Guid userId, string email, string? fullName)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString()) ?? throw new InvalidOperationException($"User {userId} not found!");
+
+            user.Email = email;
+            user.FullName = fullName;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to update user: {errors}");
+            }
+
+            return user.Id;
+        }
+
+        public async Task DeleteUserAsync(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString()) ?? throw new InvalidOperationException($"User {userId} not found!");
+
+            await _userManager.DeleteAsync(user);
+        }
+
         public async Task<User?> FindByIdAsync(Guid id)
         {
-            return await GetByIdAsync(id);
+            var appUser = await _userManager.FindByIdAsync(id.ToString());
+
+            if (appUser == null)
+                return null;
+
+            return MapToDomain(appUser);
         }
 
         public async Task<User?> FindByNameAsync(string userName)
@@ -35,7 +91,6 @@ namespace IdentityService.Infrastructure.Repositories
             {
                 Username = appUser.UserName ?? string.Empty,
                 Email = appUser.Email ?? string.Empty,
-                PasswordHash = appUser.PasswordHash ?? string.Empty,
                 FullName = appUser.FullName,
                 CreatedOnUtc = appUser.CreatedOnUtc,
                 UpdatedOnUtc = appUser.UpdatedOnUtc,

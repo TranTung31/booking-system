@@ -1,9 +1,11 @@
-﻿using IdentityService.Infrastructure;
+﻿using IdentityService.Application;
+using IdentityService.Infrastructure;
 using IdentityService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
