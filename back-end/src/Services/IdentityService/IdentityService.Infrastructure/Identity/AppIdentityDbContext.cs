@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
+using IdentityService.Domain.Interfaces;
 
 namespace IdentityService.Infrastructure.Identity
 {
@@ -34,6 +35,18 @@ namespace IdentityService.Infrastructure.Identity
 
             // Áp dụng tất cả các lớp IEntityTypeConfiguration trong cùng assembly
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            foreach (var entry in ChangeTracker.Entries<IAuditable>())
+            {
+                if (entry.State == EntityState.Added)
+                    entry.Entity.CreatedOnUtc = DateTime.UtcNow;
+                else if (entry.State == EntityState.Modified)
+                    entry.Entity.UpdatedOnUtc = DateTime.UtcNow;
+            }
+            return base.SaveChangesAsync(cancellationToken);
         }
     }
 }
