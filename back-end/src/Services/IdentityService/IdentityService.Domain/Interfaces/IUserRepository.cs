@@ -4,6 +4,7 @@ namespace IdentityService.Domain.Interfaces
 {
     public interface IUserRepository : IRepository<User, Guid>
     {
+        Task<IPagedList<User>> GetLstPagingUserAsync(string? keyword, int pageNumber, int pageSize);
         Task<Guid> CreateUserAsync(string userName, string email, string? fullName, string password);
         Task<Guid> UpdateUserAsync(Guid userId, string email, string? fullName);
         Task DeleteUserAsync(Guid userId);
