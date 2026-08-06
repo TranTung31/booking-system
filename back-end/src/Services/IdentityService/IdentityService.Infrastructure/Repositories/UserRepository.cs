@@ -1,5 +1,6 @@
 using IdentityService.Domain.Entities;
 using IdentityService.Domain.Interfaces;
+using IdentityService.Infrastructure.Extensions;
 using IdentityService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
@@ -12,6 +13,21 @@ namespace IdentityService.Infrastructure.Repositories
         public UserRepository(AppIdentityDbContext context, UserManager<ApplicationUser> userManager) : base(context)
         {
             _userManager = userManager;
+        }
+
+        public async Task<IPagedList<User>> GetLstPagingUserAsync(string? keyword, int pageNumber, int pageSize)
+        {
+            var query = _userManager.Users.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+                query = query.Where(x => (x.UserName != null && x.UserName.Contains(keyword)));
+
+            query = query.OrderByDescending(x => x.CreatedOnUtc);
+
+            var users = await query.ToPagedListAsync(pageNumber, pageSize);
+            var result = users.Select(MapToDomain).ToList();
+
+            return new PagedList<User>(result, users.PageIndex, users.PageSize, users.TotalCount);
         }
 
         public async Task<Guid> CreateUserAsync(string userName, string email, string? fullName, string password)

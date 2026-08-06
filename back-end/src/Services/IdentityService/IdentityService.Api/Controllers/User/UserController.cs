@@ -1,27 +1,27 @@
 ﻿using IdentityService.Application.Dtos.User;
 using IdentityService.Application.Features.User.Commands;
 using IdentityService.Application.Features.User.Queries;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdentityService.Api.Controllers.User;
 
 [ApiController]
 [Route("api/user")]
-public class UserController : ControllerBase
+public class UserController : BaseApiController
 {
-    private readonly ISender _sender;
-
-    public UserController(ISender sender)
+    [HttpPost("search")]
+    public async Task<ActionResult<UserDto>> GetLstPaging([FromBody] UserSearchDto dto, CancellationToken ct)
     {
-        _sender = sender;
+        var command = new GetLstPagingUserQuery(dto);
+        var result = await Mediator.Send(command, ct);
+        return Ok(result);
     }
 
     [HttpGet("{userId}")]
     public async Task<ActionResult<UserDto>> GetById(Guid userId, CancellationToken ct)
     {
         var command = new GetUserByIdQuery(userId);
-        var result = await _sender.Send(command, ct);
+        var result = await Mediator.Send(command, ct);
         return Ok(result);
     }
 
@@ -29,7 +29,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<Guid>> Create(UserCreateDto dto, CancellationToken ct)
     {
         var command = new CreateUserCommand(dto);
-        var result = await _sender.Send(command, ct);
+        var result = await Mediator.Send(command, ct);
         return Ok(result);
     }
 
@@ -37,7 +37,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<Guid>> Update(Guid userId, UserUpdateDto dto, CancellationToken ct)
     {
         var command = new UpdateUserCommand(userId, dto);
-        var result = await _sender.Send(command, ct);
+        var result = await Mediator.Send(command, ct);
         return Ok(result);
     }
 
@@ -45,7 +45,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<Guid>> Delete(Guid userId, CancellationToken ct)
     {
         var command = new DeleteUserCommand(userId);
-        var result = await _sender.Send(command, ct);
+        var result = await Mediator.Send(command, ct);
         return Ok(result);
     }
 }
