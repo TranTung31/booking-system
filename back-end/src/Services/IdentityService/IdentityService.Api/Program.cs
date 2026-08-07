@@ -56,7 +56,25 @@ var app = builder.Build();
 // Lưu ý: Đặt Swagger trước các middleware Authentication/Authorization nếu muốn truy cập được mà không cần xác thực
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
-    app.UseSwagger();
+    app.UseSwagger(options =>
+    {
+        // Set "servers" động dựa theo header X-Forwarded-Prefix do Gateway (YARP) gửi xuống.
+        // Khi truy cập trực tiếp (không qua gateway), header rỗng -> servers.url = host gốc, không thêm prefix.
+        options.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
+        {
+            var prefix = httpReq.Headers["X-Forwarded-Prefix"].FirstOrDefault() ?? "";
+            var scheme = httpReq.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? httpReq.Scheme;
+            var host = httpReq.Headers["X-Forwarded-Host"].FirstOrDefault() ?? httpReq.Host.Value;
+
+            swaggerDoc.Servers = new List<Microsoft.OpenApi.Models.OpenApiServer>
+            {
+                new Microsoft.OpenApi.Models.OpenApiServer
+                {
+                    Url = $"{scheme}://{host}{prefix}"
+                }
+            };
+        });
+    });
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "IdentityService v1");
